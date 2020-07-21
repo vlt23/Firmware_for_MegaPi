@@ -51,7 +51,6 @@ MeJoystick joystick;
 MeStepperOnBoard steppers[4] = {MeStepperOnBoard(1),MeStepperOnBoard(2),MeStepperOnBoard(3),MeStepperOnBoard(4)};
 MeBuzzer buzzer;
 MeFlameSensor FlameSensor;
-Me4Button buttonSensor;
 MeEncoderOnBoard encoders[4];
 MeLineFollower line(PORT_8);
 MeColorSensor *colorsensor  = NULL;
@@ -190,7 +189,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 #define LINEFOLLOWER           17
 #define SHUTTER                20
 #define LIMITSWITCH            21
-#define BUTTON                 22
 #define FLAMESENSOR            24
 #define COMPASS                26
 #define DIGITAL                30
@@ -198,7 +196,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 #define PWM                    32
 #define SERVO_PIN              33
 #define TONE                   34
-#define BUTTON_INNER           35
 #define ULTRASONIC_ARDUINO     36
 #define PULSEIN                37
 #define STEPPER                40
@@ -2024,25 +2021,6 @@ void readSensor(uint8_t device)
         sendFloat((float)currentTime);
       }
       break;
-    case BUTTON:
-      {
-
-        uint8_t key_num = readBuffer(7);
-        if(buttonSensor.getPort() != port)
-        {
-          buttonSensor.reset(port);
-        }
-
-        if(key_num == 0)
-        {
-          sendByte(keyPressed);
-        }
-        else
-        {
-          sendByte(keyPressed == readBuffer(7));
-        }
-      }
-      break;
     case ENCODER_BOARD:
       {
         if(port == 0)
@@ -2755,7 +2733,6 @@ void setup()
 void loop()
 {
   currentTime = millis()/1000.0-lastTime;
-  keyPressed = buttonSensor.pressed();
 
   if(millis() - blink_time > 1000)
   {
