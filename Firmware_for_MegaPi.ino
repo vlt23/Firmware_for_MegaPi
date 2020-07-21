@@ -53,7 +53,6 @@ MeStepperOnBoard steppers[4] = {MeStepperOnBoard(1),MeStepperOnBoard(2),MeSteppe
 MeBuzzer buzzer;
 MeHumiture humiture;
 MeFlameSensor FlameSensor;
-MeTouchSensor touchSensor;
 Me4Button buttonSensor;
 MeEncoderOnBoard encoders[4];
 MeLineFollower line(PORT_8);
@@ -208,7 +207,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 #define STEPPER                40
 #define LEDMATRIX              41
 #define TIMER                  50
-#define TOUCH_SENSOR           51
 #define JOYSTICK_MOVE          52
 #define COMMON_COMMONCMD       60
   //Secondary command
@@ -2081,15 +2079,6 @@ void readSensor(uint8_t device)
     case TIMER:
       {
         sendFloat((float)currentTime);
-      }
-      break;
-    case TOUCH_SENSOR:
-      {
-        if(touchSensor.getPort() != port)
-        {
-          touchSensor.reset(port);
-        }
-        sendByte(touchSensor.touched());
       }
       break;
     case BUTTON:
