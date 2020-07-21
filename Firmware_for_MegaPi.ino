@@ -50,7 +50,6 @@ MeCompass Compass;
 MeJoystick joystick;
 MeStepperOnBoard steppers[4] = {MeStepperOnBoard(1),MeStepperOnBoard(2),MeStepperOnBoard(3),MeStepperOnBoard(4)};
 MeBuzzer buzzer;
-MeHumiture humiture;
 MeFlameSensor FlameSensor;
 Me4Button buttonSensor;
 MeEncoderOnBoard encoders[4];
@@ -192,7 +191,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 #define SHUTTER                20
 #define LIMITSWITCH            21
 #define BUTTON                 22
-#define HUMITURE               23
 #define FLAMESENSOR            24
 #define COMPASS                26
 #define DIGITAL                30
@@ -1819,24 +1817,6 @@ void readSensor(uint8_t device)
         double CompassAngle;
         CompassAngle = Compass.getAngle();
         sendFloat((float)CompassAngle);
-      }
-      break;
-    case HUMITURE:
-      {
-        uint8_t index = readBuffer(7);
-        if(humiture.getPort() != port)
-        {
-          humiture.reset(port);
-        }
-        uint8_t HumitureData;
-        humiture.update();
-        if(index==2){
-          sendByte(humiture.getValue(0));
-          sendByte(humiture.getValue(1));
-        }else{
-          HumitureData = humiture.getValue(index);
-          sendByte(HumitureData);
-        }
       }
       break;
     case FLAMESENSOR:
