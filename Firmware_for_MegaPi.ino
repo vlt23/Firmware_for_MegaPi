@@ -2248,7 +2248,7 @@ void PID_speed_compute(void)
   last_speed_setpoint_filter  = last_speed_setpoint_filter  * 0.8;
   last_speed_setpoint_filter  += PID_speed.Setpoint * 0.2;
  
-  if((move_flag == true) && (abs(speed_now) < 8) && (PID_speed.Setpoint == 0))
+  if ((move_flag) && (abs(speed_now) < 8) && (PID_speed.Setpoint == 0))
   {
     move_flag = false;
     last_speed_setpoint_filter = 0;
@@ -2258,7 +2258,7 @@ void PID_speed_compute(void)
   double error = speed_now - last_speed_setpoint_filter;
   PID_speed.Integral += error;
 
-  if(move_flag == true) 
+  if (move_flag) 
   { 
     PID_speed.Integral = constrain(PID_speed.Integral , -2000, 2000);
     PID_speed.Output = PID_speed.P * error + PID_speed.I * PID_speed.Integral;
@@ -2306,11 +2306,11 @@ int16_t agx_start_count;
  */
 void reset(void)
 {
-  if((start_flag == false) && (abs(gyro_ext.getAngleX()) < 5))
+  if ((!start_flag) && (abs(gyro_ext.getAngleX()) < 5))
   {
     agx_start_count++;
   }
-  if((start_flag == true) && (abs(gyro_ext.getAngleX()) > 32))
+  if ((start_flag) && (abs(gyro_ext.getAngleX()) > 32))
   {
     agx_start_count = 0;
     encoders[0].setMotorPwm(0);
@@ -2470,7 +2470,7 @@ void parseCmd(char * cmd)
 void balanced_model(void)
 {
   reset();
-  if(start_flag == true)
+  if (start_flag)
   {
     if((millis() - lasttime_angle) > 10)
     {
@@ -2545,7 +2545,7 @@ void ultrCarProcess(void)
       BackwardAndTurnLeft();
       for(int16_t i=0;i<300;i++)
       {
-        if(read_serial() == true)
+        if (read_serial())
         {
           break;
         }
@@ -2560,7 +2560,7 @@ void ultrCarProcess(void)
       BackwardAndTurnRight();
       for(int i=0;i<300;i++)
       {
-        if(read_serial() == true)
+        if (read_serial())
         {
           break;
         }
@@ -2737,7 +2737,7 @@ boolean read_serial(void)
   {
     uint8_t c = serialRead & 0xff;
     result = true;
-    if((c == 0x55) && (isStart == false))
+    if ((c == 0x55) && (!isStart))
     {
       if(prevc == 0xff)
       {
@@ -2888,7 +2888,7 @@ void loop()
   while(isAvailable)
   {
     unsigned char c = serialRead & 0xff;
-    if((c == 0x55) && (isStart == false))
+    if ((c == 0x55) && (!isStart))
     {
       if(prevc == 0xff)
       {
