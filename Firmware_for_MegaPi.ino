@@ -42,7 +42,6 @@ Servo servos[12];
 MeMegaPiDCMotor dc;
 MeRGBLed led;
 MeUltrasonicSensor *us = NULL;     //PORT_7
-Me7SegmentDisplay seg;
 MePort generalDevice;
 MeInfraredReceiver *ir = NULL;     //PORT_6
 MeGyro gyro_ext(0,0x68);           //external gryo sensor
@@ -179,7 +178,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 #define GYRO                   6
 #define SOUND_SENSOR           7
 #define RGBLED                 8
-#define SEVSEG                 9
 #define MOTOR                  10
 #define SERVO                  11
 #define ENCODER                12
@@ -1479,16 +1477,6 @@ void runModule(uint8_t device)
           }
           sv.write(v);
         }
-      }
-      break;
-    case SEVSEG:
-      {
-        if(seg.getPort() != port)
-        {
-          seg.reset(port);
-        }
-        float v = readFloat(7);
-        seg.display(v);
       }
       break;
     case LIGHT_SENSOR:
