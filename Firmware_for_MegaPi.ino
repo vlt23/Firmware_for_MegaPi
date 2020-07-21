@@ -44,7 +44,6 @@ MeRGBLed led;
 MeUltrasonicSensor *us = NULL;     //PORT_7
 Me7SegmentDisplay seg;
 MePort generalDevice;
-MeLEDMatrix ledMx;
 MeInfraredReceiver *ir = NULL;     //PORT_6
 MeGyro gyro_ext(0,0x68);           //external gryo sensor
 MeCompass Compass;
@@ -205,7 +204,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 #define ULTRASONIC_ARDUINO     36
 #define PULSEIN                37
 #define STEPPER                40
-#define LEDMATRIX              41
 #define TIMER                  50
 #define JOYSTICK_MOVE          52
 #define COMMON_COMMONCMD       60
@@ -1496,41 +1494,6 @@ void runModule(uint8_t device)
         }
         float v = readFloat(7);
         seg.display(v);
-      }
-      break;
-    case LEDMATRIX:
-      {
-        if(ledMx.getPort()!=port)
-        {
-          ledMx.reset(port);
-        }
-        uint8_t action = readBuffer(7);
-        if(action==1)
-        {
-          int8_t px = readBuffer(8);
-          int8_t py = readBuffer(9);
-          int8_t len = readBuffer(10);
-          char *s = readString(11,len);
-          ledMx.drawStr(px,py,s);
-        }
-        else if(action==2)
-        {
-          int8_t px = readBuffer(8);
-          int8_t py = readBuffer(9);
-          uint8_t *ss = readUint8(10,16);
-          ledMx.drawBitmap(px,py,16,ss);
-        }
-        else if(action==3)
-        {
-          int8_t point = readBuffer(8);
-          int8_t hours = readBuffer(9);
-          int8_t minutes = readBuffer(10);
-          ledMx.showClock(hours,minutes,point);
-        }
-        else if(action == 4)
-        {
-          ledMx.showNum(readFloat(8),3);
-        }
       }
       break;
     case LIGHT_SENSOR:
