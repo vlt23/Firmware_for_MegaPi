@@ -126,10 +126,8 @@ uint8_t command_index = 0;
 uint8_t megapi_mode = BLUETOOTH_MODE;
 uint8_t index = 0;
 uint8_t dataLen;
-uint8_t modulesLen=0;
 uint8_t prevc=0;
 uint8_t BluetoothSource = DATA_SERIAL;
-uint8_t keyPressed = KEY_NULL;
 uint8_t serialRead;
 uint8_t buffer[52];
 uint8_t bufferBt1[52];
@@ -137,22 +135,18 @@ uint8_t bufferBt2[52];
 double  lastTime = 0.0;
 double  currentTime = 0.0;
 double  CompAngleY, CompAngleX, GyroXangle;
-double  LastCompAngleY, LastCompAngleX, LastGyroXangle;
 double  last_turn_setpoint_filter = 0.0;
 double  last_speed_setpoint_filter = 0.0;
 double  last_speed_error_filter = 0.0;
 double  speed_Integral_average = 0.0;
 double  angle_speed = 0.0;
 
-float angleServo = 90.0;
 float dt;
 
 long lasttime_angle = 0;
 long lasttime_speed = 0;
 long update_sensor = 0;
 long blink_time = 0;
-long last_Pulse_pos_encoder1 = 0;
-long last_Pulse_pos_encoder2 = 0;
 
 boolean isStart = false;
 boolean isAvailable = false;
