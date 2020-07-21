@@ -40,7 +40,6 @@
 
 Servo servos[12];  
 MeMegaPiDCMotor dc;
-MeTemperature ts;
 MeRGBLed led;
 MeUltrasonicSensor *us = NULL;     //PORT_7
 Me7SegmentDisplay seg;
@@ -179,7 +178,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 
 #define VERSION                0
 #define ULTRASONIC_SENSOR      1
-#define TEMPERATURE_SENSOR     2
 #define LIGHT_SENSOR           3
 #define POTENTIONMETER         4
 #define JOYSTICK               5
@@ -201,7 +199,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 #define FLAMESENSOR            24
 #define GASSENSOR              25
 #define COMPASS                26
-#define TEMPERATURE_SENSOR_1   27
 #define DIGITAL                30
 #define ANALOG                 31
 #define PWM                    32
@@ -1751,17 +1748,6 @@ void readSensor(uint8_t device)
           us = new MeUltrasonicSensor(port);
         }
         value = (float)us->distanceCm();
-        sendFloat(value);
-      }
-      break;
-    case TEMPERATURE_SENSOR:
-      {
-        slot = readBuffer(7);
-        if(ts.getPort() != port || ts.getSlot() != slot)
-        {
-          ts.reset(port,slot);
-        }
-        value = ts.temperature();
         sendFloat(value);
       }
       break;
