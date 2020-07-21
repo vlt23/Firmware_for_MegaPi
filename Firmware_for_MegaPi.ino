@@ -53,7 +53,6 @@ MeStepperOnBoard steppers[4] = {MeStepperOnBoard(1),MeStepperOnBoard(2),MeSteppe
 MeBuzzer buzzer;
 MeHumiture humiture;
 MeFlameSensor FlameSensor;
-MeGasSensor GasSensor;
 MeTouchSensor touchSensor;
 Me4Button buttonSensor;
 MeEncoderOnBoard encoders[4];
@@ -197,7 +196,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 #define BUTTON                 22
 #define HUMITURE               23
 #define FLAMESENSOR            24
-#define GASSENSOR              25
 #define COMPASS                26
 #define DIGITAL                30
 #define ANALOG                 31
@@ -1890,18 +1888,6 @@ void readSensor(uint8_t device)
         int16_t FlameData; 
         FlameData = FlameSensor.readAnalog();
         sendShort(FlameData);
-      }
-      break;
-    case GASSENSOR:
-      {
-        if(GasSensor.getPort() != port)
-        {
-          GasSensor.reset(port);
-          GasSensor.setpin(GasSensor.pin2(),GasSensor.pin1());
-        }
-        int16_t GasData; 
-        GasData = GasSensor.readAnalog();
-        sendShort(GasData);
       }
       break;
     case GYRO:
