@@ -43,7 +43,6 @@ MeMegaPiDCMotor dc;
 MeRGBLed led;
 MeUltrasonicSensor *us = NULL;     //PORT_7
 MePort generalDevice;
-MeInfraredReceiver *ir = NULL;     //PORT_6
 MeGyro gyro_ext(0,0x68);           //external gryo sensor
 MeCompass Compass;
 MeJoystick joystick;
@@ -111,7 +110,6 @@ int16_t LineFollowFlag=0;
 #define BLUETOOTH_MODE                       0x00
 #define AUTOMATIC_OBSTACLE_AVOIDANCE_MODE    0x01
 #define BALANCED_MODE                        0x02
-#define IR_REMOTE_MODE                       0x03
 #define LINE_FOLLOW_MODE                     0x04
 #define MAX_MODE                             0x05
 
@@ -129,7 +127,6 @@ uint8_t megapi_mode = BLUETOOTH_MODE;
 uint8_t index = 0;
 uint8_t dataLen;
 uint8_t modulesLen=0;
-uint8_t irRead = 0;
 uint8_t prevc=0;
 uint8_t BluetoothSource = DATA_SERIAL;
 uint8_t keyPressed = KEY_NULL;
@@ -181,7 +178,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 #define MOTOR                  10
 #define SERVO                  11
 #define ENCODER                12
-#define IR                     13
 #define PIRMOTION              15
 #define INFRARED               16
 #define LINEFOLLOWER           17
@@ -1443,7 +1439,6 @@ void runModule(uint8_t device)
           if((cmd_data == BALANCED_MODE) || 
              (cmd_data == AUTOMATIC_OBSTACLE_AVOIDANCE_MODE) || 
              (cmd_data == BLUETOOTH_MODE) ||
-             (cmd_data == IR_REMOTE_MODE) ||
              (cmd_data == LINE_FOLLOW_MODE))
           {
             megapi_mode = cmd_data;
@@ -1722,30 +1717,6 @@ void readSensor(uint8_t device)
         {
           value = joystick.read(slot);
           sendFloat(value);
-        }
-      }
-      break;
-    case INFRARED:
-      {
-        if(ir == NULL)
-        {
-          ir = new MeInfraredReceiver(port);
-          ir->begin();
-        }
-        else if(ir->getPort() != port)
-        {
-          delete ir;
-          ir = new MeInfraredReceiver(port);
-          ir->begin();
-        }
-        irRead = ir->getCode();
-        if((irRead < 255) && (irRead > 0))
-        {
-          sendFloat((float)irRead);
-        }
-        else
-        {
-          sendFloat(0);
         }
       }
       break;
@@ -2451,95 +2422,6 @@ void ultrCarProcess(void)
 
 /**
  * \par Function
- *    IrProcess
- * \par Description
- *    The main function for IR control mode
- * \param[in]
- *    None
- * \par Output
- *    None
- * \return
- *    None
- * \par Others
- *    None
- */
-void IrProcess()
-{
-  if(ir == NULL)
-  {
-      ir = new MeInfraredReceiver(PORT_6);
-      ir->begin();
-  }
-  ir->loop();
-  irRead =  ir->getCode();
-  if((irRead != IR_BUTTON_TEST) && (megapi_mode != IR_REMOTE_MODE))
-  {
-    return;
-  }
-  switch(irRead)
-  {
-    case IR_BUTTON_PLUS: 
-      Forward();
-      break;
-    case IR_BUTTON_MINUS:
-      Backward();
-      break;
-    case IR_BUTTON_NEXT:
-      TurnRight();
-      break;
-    case IR_BUTTON_PREVIOUS:
-      TurnLeft();
-      break;
-    case IR_BUTTON_9:
-      ChangeSpeed(factor*9+minSpeed);
-      break;
-    case IR_BUTTON_8:
-      ChangeSpeed(factor*8+minSpeed);
-      break;
-    case IR_BUTTON_7:
-      ChangeSpeed(factor*7+minSpeed);
-      break;
-    case IR_BUTTON_6:
-      ChangeSpeed(factor*6+minSpeed);
-      break;
-    case IR_BUTTON_5:
-      ChangeSpeed(factor*5+minSpeed);
-      break;
-    case IR_BUTTON_4:
-      ChangeSpeed(factor*4+minSpeed);
-      break;
-    case IR_BUTTON_3:
-      ChangeSpeed(factor*3+minSpeed);
-      break;
-    case IR_BUTTON_2:
-      ChangeSpeed(factor*2+minSpeed);
-      break;
-    case IR_BUTTON_1:
-      ChangeSpeed(factor*1+minSpeed);
-      break;
-    case IR_BUTTON_0:
-      Stop();
-      break;
-    case IR_BUTTON_TEST:
-      Stop();
-      while( ir->buttonState() != 0)
-      {
-        ir->loop();
-      }
-      megapi_mode = megapi_mode + 1;
-      if(megapi_mode == MAX_MODE)
-      { 
-        megapi_mode = BLUETOOTH_MODE;
-      }
-      break;
-    default:
-      Stop();
-      break;
-  }
-}
-
-/**
- * \par Function
  *    line_model
  * \par Description
  *    The main function for Patrol Line navigation mode
@@ -2727,11 +2609,6 @@ void loop()
     blink_time = millis();
     blink_flag = !blink_flag;
     digitalWrite(13,blink_flag);
-  }
-
-  if(ir != NULL)
-  {
-    IrProcess();
   }
 
   for(int i=0;i<4;i++)
