@@ -173,7 +173,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 #define SERVO                  11
 #define ENCODER                12
 #define PIRMOTION              15
-#define INFRARED               16
 #define LINEFOLLOWER           17
 #define SHUTTER                20
 #define LIMITSWITCH            21
@@ -183,7 +182,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 #define ANALOG                 31
 #define PWM                    32
 #define SERVO_PIN              33
-#define TONE                   34
 #define ULTRASONIC_ARDUINO     36
 #define PULSEIN                37
 #define STEPPER                40
