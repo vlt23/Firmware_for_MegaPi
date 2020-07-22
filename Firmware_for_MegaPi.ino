@@ -110,11 +110,6 @@ int16_t LineFollowFlag=0;
 #define AUTOMATIC_OBSTACLE_AVOIDANCE_MODE    0x01
 #define BALANCED_MODE                        0x02
 #define LINE_FOLLOW_MODE                     0x04
-#define MAX_MODE                             0x05
-
-//#define POWER_PORT                           A4
-//#define BUZZER_PORT                          45
-//#define RGBLED_PORT                          44
 
 #define DATA_SERIAL                            0
 #define DATA_SERIAL1                           1
