@@ -157,7 +157,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 
 #define VERSION                0
 #define ULTRASONIC_SENSOR      1
-#define LIGHT_SENSOR           3
 #define POTENTIONMETER         4
 #define JOYSTICK               5
 #define GYRO                   6
@@ -1457,16 +1456,6 @@ void runModule(uint8_t device)
         }
       }
       break;
-    case LIGHT_SENSOR:
-      {
-        if(generalDevice.getPort() != port)
-        {
-          generalDevice.reset(port);
-        }
-        uint8_t v = readBuffer(7);
-        generalDevice.dWrite1(v);
-      }
-      break;
     case SHUTTER:
       {
         if(generalDevice.getPort() != port)
@@ -1671,7 +1660,6 @@ void readSensor(uint8_t device)
         sendFloat(value);
       }
       break;
-    case LIGHT_SENSOR:
     case SOUND_SENSOR:
     case POTENTIONMETER:
       {
