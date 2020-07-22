@@ -953,7 +953,6 @@ void parseData(void)
       break;
     case RESET:
       {
-        //reset
         /* reset On-Board encoder driver */
         for(int i=0;i<4;i++)
         {
@@ -991,7 +990,6 @@ void parseData(void)
       break;
      case START:
       {
-        //start
         callOK();
       }
       break;
@@ -2610,19 +2608,6 @@ void loop()
     steppers[i].update();
     encoders[i].loop();
   }
-
-//  while(Serial.available() > 0)
-//  {
-//    char c = Serial.read();
-//    Serial.write(c);
-//    buf[bufindex++]=c;
-//    if((c=='\n') || (c=='#'))
-//    {
-//      parseCmd(buf);
-//      memset(buf,0,64);
-//      bufindex = 0;
-//    }
-//  }
 
   readSerial();
   while(isAvailable)
