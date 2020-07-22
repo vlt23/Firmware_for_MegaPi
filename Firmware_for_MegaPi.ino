@@ -48,7 +48,6 @@ MeCompass Compass;
 MeJoystick joystick;
 MeStepperOnBoard steppers[4] = {MeStepperOnBoard(1),MeStepperOnBoard(2),MeStepperOnBoard(3),MeStepperOnBoard(4)};
 MeBuzzer buzzer;
-MeFlameSensor FlameSensor;
 MeEncoderOnBoard encoders[4];
 MeLineFollower line(PORT_8);
 MeColorSensor *colorsensor  = NULL;
@@ -176,7 +175,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 #define LINEFOLLOWER           17
 #define SHUTTER                20
 #define LIMITSWITCH            21
-#define FLAMESENSOR            24
 #define COMPASS                26
 #define DIGITAL                30
 #define ANALOG                 31
@@ -1763,18 +1761,6 @@ void readSensor(uint8_t device)
         double CompassAngle;
         CompassAngle = Compass.getAngle();
         sendFloat((float)CompassAngle);
-      }
-      break;
-    case FLAMESENSOR:
-      {
-        if(FlameSensor.getPort() != port)
-        {
-          FlameSensor.reset(port);
-          FlameSensor.setpin(FlameSensor.pin2(),FlameSensor.pin1());
-        }
-        int16_t FlameData; 
-        FlameData = FlameSensor.readAnalog();
-        sendShort(FlameData);
       }
       break;
     case GYRO:
