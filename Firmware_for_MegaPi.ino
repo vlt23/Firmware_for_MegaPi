@@ -69,12 +69,6 @@ union
 
 union
 {
-  uint8_t byteVal[8];
-  double doubleVal;
-}valDouble;
-
-union
-{
   uint8_t byteVal[2];
   int16_t shortVal;
 }valShort;
@@ -1016,30 +1010,6 @@ void sendShort(int16_t value)
 
 /**
  * \par Function
- *    sendDouble
- * \par Description
- *    Sned double data, same as float data on arduino.
- * \param[in]
- *    value - the double data need be sent.
- * \par Output
- *    None
- * \return
- *    None
- * \par Others
- *    None
- */
-void sendDouble(double value)
-{
-  writeSerial(5);
-  valDouble.doubleVal = value;
-  writeSerial(valDouble.byteVal[0]);
-  writeSerial(valDouble.byteVal[1]);
-  writeSerial(valDouble.byteVal[2]);
-  writeSerial(valDouble.byteVal[3]);
-}
-
-/**
- * \par Function
  *    readShort
  * \par Description
  *    read the short data.
@@ -1057,29 +1027,6 @@ int16_t readShort(int16_t idx)
   valShort.byteVal[0] = readBuffer(idx);
   valShort.byteVal[1] = readBuffer(idx+1);
   return valShort.shortVal; 
-}
-
-/**
- * \par Function
- *    readFloat
- * \par Description
- *    read the float data.
- * \param[in]
- *    idx - The data's first address in the array.
- * \par Output
- *    None
- * \return
- *    the float data.
- * \par Others
- *    None
- */
-float readFloat(int16_t idx)
-{
-  val.byteVal[0] = readBuffer(idx);
-  val.byteVal[1] = readBuffer(idx+1);
-  val.byteVal[2] = readBuffer(idx+2);
-  val.byteVal[3] = readBuffer(idx+3);
-  return val.floatVal;
 }
 
 /**
@@ -1103,64 +1050,6 @@ long readLong(int16_t idx)
   val.byteVal[2] = readBuffer(idx+2);
   val.byteVal[3] = readBuffer(idx+3);
   return val.longVal;
-}
-
-char _receiveStr[20] = {};
-uint8_t _receiveUint8[16] = {};
-
-/**
- * \par Function
- *    readString
- * \par Description
- *    read the string data.
- * \param[in]
- *    idx - The string's first address in the array.
- * \param[in]
- *    len - The length of the string data.
- * \par Output
- *    None
- * \return
- *    the address of string data.
- * \par Others
- *    None
- */
-char* readString(int16_t idx,int16_t len)
-{
-  for(int16_t i=0;i<len;i++)
-  {
-    _receiveStr[i]=readBuffer(idx+i);
-  }
-  _receiveStr[len] = '\0';
-  return _receiveStr;
-}
-
-/**
- * \par Function
- *    readUint8
- * \par Description
- *    read the uint8 data.
- * \param[in]
- *    idx - The Uint8 data's first address in the array.
- * \param[in]
- *    len - The length of the uint8 data.
- * \par Output
- *    None
- * \return
- *    the address of uint8 data.
- * \par Others
- *    None
- */
-uint8_t* readUint8(int16_t idx,int16_t len)
-{
-  for(int16_t i=0;i<len;i++)
-  {
-    if(i > 15)
-    {
-      break;
-    }
-    _receiveUint8[i] = readBuffer(idx+i);
-  }
-  return _receiveUint8;
 }
 
 /**
