@@ -43,7 +43,6 @@ MeMegaPiDCMotor dc;
 MeRGBLed led;
 MeUltrasonicSensor *us = NULL;     //PORT_7
 MePort generalDevice;
-MeCompass Compass;
 MeJoystick joystick;
 MeStepperOnBoard steppers[4] = {MeStepperOnBoard(1),MeStepperOnBoard(2),MeStepperOnBoard(3),MeStepperOnBoard(4)};
 MeBuzzer buzzer;
@@ -155,7 +154,6 @@ String mVersion = "0e.01.018";
 #define LINEFOLLOWER           17
 #define SHUTTER                20
 #define LIMITSWITCH            21
-#define COMPASS                26
 #define DIGITAL                30
 #define ANALOG                 31
 #define PWM                    32
@@ -1610,18 +1608,6 @@ void readSensor(uint8_t device)
         sendFloat(value);  
       }
       break;
-    case COMPASS:
-      {
-        if(Compass.getPort() != port)
-        {
-          Compass.reset(port);
-          Compass.setpin(Compass.pin1(),Compass.pin2());
-        }
-        double CompassAngle;
-        CompassAngle = Compass.getAngle();
-        sendFloat((float)CompassAngle);
-      }
-      break;
     case COLORSENSOR:
       {
         uint8_t colorsubcmd = 0;
@@ -2143,10 +2129,6 @@ void loop()
     readSerial();
   }
 
-  if(Compass.getPort() != 0)
-  {
-    Compass.getAngle();
-  }
   if(megapi_mode == AUTOMATIC_OBSTACLE_AVOIDANCE_MODE)
   { 
     ultrCarProcess();
