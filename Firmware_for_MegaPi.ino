@@ -43,7 +43,6 @@ MeMegaPiDCMotor dc;
 MeRGBLed led;
 MeUltrasonicSensor *us = NULL;     //PORT_7
 MePort generalDevice;
-MeGyro gyro_ext(0,0x68);           //external gryo sensor
 MeCompass Compass;
 MeJoystick joystick;
 MeStepperOnBoard steppers[4] = {MeStepperOnBoard(1),MeStepperOnBoard(2),MeStepperOnBoard(3),MeStepperOnBoard(4)};
@@ -108,7 +107,6 @@ int16_t LineFollowFlag=0;
 
 #define BLUETOOTH_MODE                       0x00
 #define AUTOMATIC_OBSTACLE_AVOIDANCE_MODE    0x01
-#define BALANCED_MODE                        0x02
 #define LINE_FOLLOW_MODE                     0x04
 
 #define DATA_SERIAL                            0
@@ -128,18 +126,9 @@ uint8_t bufferBt1[52];
 uint8_t bufferBt2[52];
 double  lastTime = 0.0;
 double  currentTime = 0.0;
-double  CompAngleY, CompAngleX, GyroXangle;
-double  last_turn_setpoint_filter = 0.0;
-double  last_speed_setpoint_filter = 0.0;
-double  last_speed_error_filter = 0.0;
-double  speed_Integral_average = 0.0;
-double  angle_speed = 0.0;
 
 float dt;
 
-long lasttime_angle = 0;
-long lasttime_speed = 0;
-long update_sensor = 0;
 long blink_time = 0;
 
 boolean isStart = false;
@@ -152,14 +141,11 @@ boolean blink_flag = false;
 
 String mVersion = "0e.01.018";
 //////////////////////////////////////////////////////////////////////////////////////
-float RELAX_ANGLE = -1;                    //Natural balance angle,should be adjustment according to your own car
-#define PWM_MIN_OFFSET   0
 
 #define VERSION                0
 #define ULTRASONIC_SENSOR      1
 #define POTENTIONMETER         4
 #define JOYSTICK               5
-#define GYRO                   6
 #define SOUND_SENSOR           7
 #define RGBLED                 8
 #define MOTOR                  10
@@ -178,7 +164,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 #define PULSEIN                37
 #define STEPPER                40
 #define TIMER                  50
-#define JOYSTICK_MOVE          52
 #define COMMON_COMMONCMD       60
   //Secondary command
   #define SET_STARTER_MODE     0x10
@@ -218,14 +203,6 @@ float RELAX_ANGLE = -1;                    //Natural balance angle,should be adj
 #define RUN 2
 #define RESET 4
 #define START 5
-
-typedef struct
-{
-  double P, I, D;
-  double Setpoint, Output, Integral,differential, last_error;
-} PID;
-
-PID  PID_angle, PID_speed, PID_turn;
 
 /**
  * \par Function
@@ -380,43 +357,6 @@ void isr_process_encoder4(void)
 
 /**
  * \par Function
- *    WriteBalancedDataToEEPROM
- * \par Description
- *    This function use to write the balanced car configuration parameters to EEPROM.
- * \param[in]
- *    None
- * \par Output
- *    None
- * \return
- *    None
- * \par Others
- *    None
- */
-void WriteBalancedDataToEEPROM(void)
-{
-  EEPROM.write(BALANCED_CAR_PARTITION_CHECK, EEPROM_IF_HAVEPID_CHECK1);
-  EEPROM.write(BALANCED_CAR_PARTITION_CHECK + 1, EEPROM_IF_HAVEPID_CHECK2);
-  EEPROM.write(BALANCED_CAR_START_ADDR, EEPROM_CHECK_START);
-
-  EEPROM.put(BALANCED_CAR_NATURAL_BALANCE, RELAX_ANGLE);
-  EEPROM.put(BALANCED_CAR_ANGLE_PID_ADDR, PID_angle.P);
-  EEPROM.put(BALANCED_CAR_ANGLE_PID_ADDR+4, PID_angle.I);
-  EEPROM.put(BALANCED_CAR_ANGLE_PID_ADDR+8, PID_angle.D);
-
-  EEPROM.put(BALANCED_CAR_SPEED_PID_ADDR, PID_speed.P);
-  EEPROM.put(BALANCED_CAR_SPEED_PID_ADDR+4, PID_speed.I);
-  EEPROM.put(BALANCED_CAR_SPEED_PID_ADDR+8, PID_speed.D);
-
-  EEPROM.put(BALANCED_CAR_DIR_PID_ADDR, PID_turn.P);
-  EEPROM.write(BALANCED_CAR_END_ADDR, EEPROM_CHECK_END);
-
-  EEPROM.write(MEGAPI_MODE_START_ADDR, EEPROM_CHECK_START);
-  EEPROM.write(MEGAPI_MODE_CONFIGURE, megapi_mode);
-  EEPROM.write(MEGAPI_MODE_END_ADDR, EEPROM_CHECK_END);
-}
-
-/**
- * \par Function
  *    WriteMegapiModeToEEPROM
  * \par Description
  *    This function use to write the MegaPi Mode configuration parameter to EEPROM.
@@ -454,52 +394,6 @@ void WriteMegapiModeToEEPROM(void)
  */
 void readEEPROM(void)
 {
-  if((EEPROM.read(BALANCED_CAR_PARTITION_CHECK) == EEPROM_IF_HAVEPID_CHECK1) && (EEPROM.read(BALANCED_CAR_PARTITION_CHECK + 1) == EEPROM_IF_HAVEPID_CHECK2))
-  {
-    if((EEPROM.read(BALANCED_CAR_START_ADDR)  == EEPROM_CHECK_START) && (EEPROM.read(BALANCED_CAR_END_ADDR)  == EEPROM_CHECK_END))
-    {
-      EEPROM.get(BALANCED_CAR_NATURAL_BALANCE, RELAX_ANGLE);
-      EEPROM.get(BALANCED_CAR_ANGLE_PID_ADDR, PID_angle.P);
-      EEPROM.get(BALANCED_CAR_ANGLE_PID_ADDR+4, PID_angle.I);
-      EEPROM.get(BALANCED_CAR_ANGLE_PID_ADDR+8, PID_angle.D);
-
-      EEPROM.get(BALANCED_CAR_SPEED_PID_ADDR, PID_speed.P);
-      EEPROM.get(BALANCED_CAR_SPEED_PID_ADDR+4, PID_speed.I);
-      EEPROM.get(BALANCED_CAR_SPEED_PID_ADDR+8, PID_speed.D);
-
-      EEPROM.get(BALANCED_CAR_DIR_PID_ADDR, PID_turn.P);
-#ifdef DEBUG_INFO
-      Serial.println( "Read data from EEPROM:");
-      Serial.print(RELAX_ANGLE);
-      Serial.print( "  ");
-      Serial.print(PID_angle.P);
-      Serial.print( "  ");
-      Serial.print(PID_angle.I);
-      Serial.print( "  ");
-      Serial.print(PID_angle.D);
-      Serial.print( "  ");
-      Serial.print(PID_speed.P);
-      Serial.print( "  ");
-      Serial.print(PID_speed.I);
-      Serial.print( "  ");
-      Serial.print(PID_speed.D);
-      Serial.print( "  ");
-      Serial.println(PID_turn.P);
-#endif
-    }
-    else
-    {
-      Serial.println( "Data area damage on balanced car pid!" );
-    }
-  }
-  else
-  {
-#ifdef DEBUG_INFO
-    Serial.println( "First written Balanced data!" );
-#endif
-    WriteBalancedDataToEEPROM();
-  }
-
   if((EEPROM.read(MEGAPI_MODE_PARTITION_CHECK) == EEPROM_IF_HAVEPID_CHECK1) && (EEPROM.read(MEGAPI_MODE_PARTITION_CHECK + 1) == EEPROM_IF_HAVEPID_CHECK2))
   {
     if((EEPROM.read(MEGAPI_MODE_START_ADDR)  == EEPROM_CHECK_START) && (EEPROM.read(MEGAPI_MODE_END_ADDR)  == EEPROM_CHECK_END))
@@ -1418,8 +1312,7 @@ void runModule(uint8_t device)
         if(SET_MEGAPI_MODE == subcmd)
         {
           Stop();
-          if((cmd_data == BALANCED_MODE) || 
-             (cmd_data == AUTOMATIC_OBSTACLE_AVOIDANCE_MODE) || 
+          if((cmd_data == AUTOMATIC_OBSTACLE_AVOIDANCE_MODE) || 
              (cmd_data == BLUETOOTH_MODE) ||
              (cmd_data == LINE_FOLLOW_MODE))
           {
@@ -1504,23 +1397,6 @@ void runModule(uint8_t device)
     case TIMER:
       {
         lastTime = millis()/1000.0; 
-      }
-      break;
-    case JOYSTICK_MOVE:
-      {
-        if(port == 0)
-        {
-           int16_t joy_x = readShort(7);
-           int16_t joy_y = readShort(9);
-           double joy_x_temp = (double)joy_x * 0.2;    //0.3
-           double joy_y_temp = -(double)joy_y * 0.15;  //0.2
-           PID_speed.Setpoint = joy_y_temp;
-           PID_turn.Setpoint = joy_x_temp;
-           if(abs(PID_speed.Setpoint) > 1)
-           { 
-             move_flag = true;
-           }
-        }
       }
       break;
     case ENCODER_PID_MOTION:
@@ -1746,28 +1622,6 @@ void readSensor(uint8_t device)
         sendFloat((float)CompassAngle);
       }
       break;
-    case GYRO:
-      {
-        uint8_t axis = readBuffer(7);
-        if((port == 0) && (gyro_ext.getDevAddr() == 0x68))      //extern gyro
-        {
-          if(axis==0)
-          {
-            sendFloat(gyro_ext.getAngle(1));
-            sendFloat(gyro_ext.getAngle(2));
-            sendFloat(gyro_ext.getAngle(3));
-          }
-          else
-          {
-            sendFloat(gyro_ext.getAngle(axis));
-          }
-        }
-        else
-        {
-          sendFloat(0);
-        }
-      }
-      break;
     case COLORSENSOR:
       {
         uint8_t colorsubcmd = 0;
@@ -1971,326 +1825,6 @@ void readSensor(uint8_t device)
       }
       break;
   }//switch
-}
-
-/**
- * \par Function
- *    PID_angle_compute
- * \par Description
- *    The angle process for balance car
- * \param[in]
- *    None
- * \par Output
- *    None
- * \return
- *    None
- * \par Others
- *    None
- */
-void PID_angle_compute(void)   //PID
-{
-  CompAngleX = -gyro_ext.getAngleX();
-  double error = CompAngleX - PID_angle.Setpoint;
-  PID_angle.Integral += error;
-  PID_angle.Integral = constrain(PID_angle.Integral,-100,100); 
-  PID_angle.differential = angle_speed;
-  PID_angle.Output = PID_angle.P * error + PID_angle.I * PID_angle.Integral + PID_angle.D * PID_angle.differential;
-  if(PID_angle.Output > 0)
-  {
-    PID_angle.Output = PID_angle.Output + PWM_MIN_OFFSET;
-  }
-  else
-  {
-    PID_angle.Output = PID_angle.Output - PWM_MIN_OFFSET;
-  }
-
-  double pwm_left = PID_angle.Output - PID_turn.Output;
-  double pwm_right = -PID_angle.Output - PID_turn.Output;
-
-#ifdef DEBUG_INFO
-  Serial.print("Relay: ");
-  Serial.print(PID_angle.Setpoint);
-  Serial.print(" AngX: ");
-  Serial.print(CompAngleX);
-  Serial.print(" Output: ");
-  Serial.print(PID_angle.Output);
-  Serial.print("PID_angle.Integral: ");
-  Serial.print(PID_angle.Integral);
-  Serial.print(" dif: ");
-  Serial.println(PID_angle.differential);
-#endif
-
-  pwm_left = constrain(pwm_left, -255, 255);
-  pwm_right = constrain(pwm_right, -255, 255);
-
-  encoders[0].setMotorPwm(pwm_left);
-  encoders[1].setMotorPwm(pwm_right);
-}
-
-/**
- * \par Function
- *    PID_speed_compute
- * \par Description
- *    The speed process for balance car
- * \param[in]
- *    None
- * \par Output
- *    None
- * \return
- *    None
- * \par Others
- *    None
- */
-void PID_speed_compute(void)
-{
-  double speed_now = (encoders[1].getCurrentSpeed() - encoders[0].getCurrentSpeed())/2;
-
-  last_speed_setpoint_filter  = last_speed_setpoint_filter  * 0.8;
-  last_speed_setpoint_filter  += PID_speed.Setpoint * 0.2;
- 
-  if ((move_flag) && (abs(speed_now) < 8) && (PID_speed.Setpoint == 0))
-  {
-    move_flag = false;
-    last_speed_setpoint_filter = 0;
-    PID_speed.Integral = speed_Integral_average;
-  }
-
-  double error = speed_now - last_speed_setpoint_filter;
-  PID_speed.Integral += error;
-
-  if (move_flag) 
-  { 
-    PID_speed.Integral = constrain(PID_speed.Integral , -2000, 2000);
-    PID_speed.Output = PID_speed.P * error + PID_speed.I * PID_speed.Integral;
-    PID_speed.Output = constrain(PID_speed.Output , -8.0, 8.0);
-  }
-  else
-  {  
-    PID_speed.Integral = constrain(PID_speed.Integral , -2000, 2000);
-    PID_speed.Output = PID_speed.P * speed_now + PID_speed.I * PID_speed.Integral;
-    PID_speed.Output = constrain(PID_speed.Output , -10.0, 10.0);
-    speed_Integral_average = 0.8 * speed_Integral_average + 0.2 * PID_speed.Integral;
-  }
-  
-#ifdef DEBUG_INFO
-  Serial.print(speed_now);
-  Serial.print(","); 
-  Serial.print(PID_speed.Setpoint);
-  Serial.print(",");      
-  Serial.print(last_speed_error_filter);
-  Serial.print(",");
-  Serial.print(last_speed_setpoint_filter);
-  Serial.print(",");
-  Serial.print(PID_speed.Integral);
-  Serial.print(",");
-  Serial.println(PID_speed.Output);
-#endif
-  PID_angle.Setpoint =  RELAX_ANGLE + PID_speed.Output;
-}
-
-int16_t agx_start_count;
-
-/**
- * \par Function
- *    reset
- * \par Description
- *    The exception process for balance car
- * \param[in]
- *    None
- * \par Output
- *    None
- * \return
- *    None
- * \par Others
- *    None
- */
-void reset(void)
-{
-  if ((!start_flag) && (abs(gyro_ext.getAngleX()) < 5))
-  {
-    agx_start_count++;
-  }
-  if ((start_flag) && (abs(gyro_ext.getAngleX()) > 32))
-  {
-    agx_start_count = 0;
-    encoders[0].setMotorPwm(0);
-    encoders[1].setMotorPwm(0);
-    PID_speed.Integral = 0;
-    PID_angle.Setpoint = RELAX_ANGLE;
-    PID_speed.Setpoint = 0;
-    PID_turn.Setpoint = 0;
-    encoders[0].setPulsePos(0);
-    encoders[1].setPulsePos(0);
-    PID_speed.Integral = 0;
-    start_flag = false;
-    last_speed_setpoint_filter = 0.0;
-    last_turn_setpoint_filter = 0.0;
-#ifdef DEBUG_INFO
-    Serial.println("> 32");
-#endif
-  }
-  else if(agx_start_count > 20)
-  {
-    agx_start_count = 0;
-    PID_speed.Integral = 0;
-    encoders[0].setMotorPwm(0);
-    encoders[1].setMotorPwm(0);
-    PID_angle.Setpoint = RELAX_ANGLE;
-    encoders[0].setPulsePos(0);
-    encoders[1].setPulsePos(0);
-    lasttime_speed = lasttime_angle = millis();
-    start_flag = true;
-#ifdef DEBUG_INFO
-    Serial.println("< 5");
-#endif
-  }
-}
-
-/**
- * \par Function
- *    parseGcode
- * \par Description
- *    The function used to configure parameters for balance car.
- * \param[in]
- *    cmd - Gcode command
- * \par Output
- *    None
- * \return
- *    None
- * \par Others
- *    None
- */
-void parseGcode(char * cmd)
-{
-  char * tmp;
-  char * str;
-  char g_code_cmd;
-  float p_value = 0;
-  float i_value = 0;
-  float d_value = 0;
-  float relax_angle = 0;
-  str = strtok_r(cmd, " ", &tmp);
-  g_code_cmd = str[0];
-  while(str!=NULL)
-  {
-    str = strtok_r(0, " ", &tmp);
-    if((str[0]=='P') || (str[0]=='p')){
-      p_value = atof(str+1);
-    }else if((str[0]=='I') || (str[0]=='i')){
-      i_value = atof(str+1);
-    }else if((str[0]=='D') || (str[0]=='d')){
-      d_value = atof(str+1);
-    }
-    else if((str[0]=='Z') || (str[0]=='z')){
-      relax_angle  = atof(str+1);
-    }
-    else if((str[0]=='M') || (str[0]=='m')){
-      megapi_mode  = atof(str+1);
-    }
-  }
-//#ifdef DEBUG_INFO
-  Serial.print("PID: ");
-  Serial.print(p_value);
-  Serial.print(", ");
-  Serial.print(i_value);
-  Serial.print(",  ");
-  Serial.println(d_value);
-//#endif
-  if(g_code_cmd == '1')
-  {
-    PID_angle.P = p_value;
-    PID_angle.I = i_value;
-    PID_angle.D = d_value;
-    EEPROM.put(BALANCED_CAR_ANGLE_PID_ADDR, PID_angle.P);
-    EEPROM.put(BALANCED_CAR_ANGLE_PID_ADDR+4, PID_angle.I);
-    EEPROM.put(BALANCED_CAR_ANGLE_PID_ADDR+8, PID_angle.D);
-  }
-  else if(g_code_cmd == '2')
-  {
-    PID_speed.P = p_value;
-    PID_speed.I = i_value;
-    PID_speed.D = d_value;
-    EEPROM.put(BALANCED_CAR_SPEED_PID_ADDR, PID_speed.P);
-    EEPROM.put(BALANCED_CAR_SPEED_PID_ADDR+4, PID_speed.I);
-    EEPROM.put(BALANCED_CAR_SPEED_PID_ADDR+8, PID_speed.D);
-  }
-  else if(g_code_cmd == '3')
-  {
-    RELAX_ANGLE = relax_angle;
-    EEPROM.put(BALANCED_CAR_NATURAL_BALANCE, relax_angle);
-  }
-  else if(g_code_cmd == '4')
-  {
-    if(EEPROM.read(MEGAPI_MODE_CONFIGURE) != megapi_mode)
-    {
-      EEPROM.write(MEGAPI_MODE_CONFIGURE, megapi_mode);
-    }
-    Serial.print("megapi_mode: ");
-    Serial.println(megapi_mode);
-  }
-}
-
-/**
- * \par Function
- *    parseCmd
- * \par Description
- *    The function used to parse Gcode command.
- * \param[in]
- *    cmd - Gcode command
- * \par Output
- *    None
- * \return
- *    None
- * \par Others
- *    None
- */
-void parseCmd(char * cmd)
-{
-  if((cmd[0]=='g') || (cmd[0]=='G'))
-  { 
-    // gcode
-    parseGcode(cmd+1);
-  }
-}
-
-/**
- * \par Function
- *    balanced_model
- * \par Description
- *    The main function for balanced car model
- * \param[in]
- *    None
- * \par Output
- *    None
- * \return
- *    None
- * \par Others
- *    None
- */
-void balanced_model(void)
-{
-  reset();
-  if (start_flag)
-  {
-    if((millis() - lasttime_angle) > 10)
-    {
-      PID_angle_compute();
-      lasttime_angle = millis();
-    }    
-    if((millis() - lasttime_speed) > 100)
-    {
-      PID_speed_compute();
-      last_turn_setpoint_filter  = last_turn_setpoint_filter * 0.8;
-      last_turn_setpoint_filter  += PID_turn.Setpoint * 0.2;
-      PID_turn.Output = last_turn_setpoint_filter;
-      lasttime_speed = millis();
-    }
-  }
-  else
-  {
-    encoders[0].setMotorPwm(0);
-    encoders[1].setMotorPwm(0);
-  } 
 }
 
 /**
@@ -2505,8 +2039,6 @@ void setup()
   attachInterrupt(encoders[2].getIntNum(), isr_process_encoder3, RISING);
   attachInterrupt(encoders[3].getIntNum(), isr_process_encoder4, RISING);
   delay(5);
-  gyro_ext.begin();
-  delay(5);
   pinMode(13,OUTPUT);
 
   //Set Pwm 970Hz
@@ -2530,17 +2062,9 @@ void setup()
 
   leftflag=false;
   rightflag=false;
-  PID_angle.Setpoint = RELAX_ANGLE;
-  PID_angle.P = 20;          // 20;
-  PID_angle.I = 1;           // 1;
-  PID_angle.D = 0.2;         // 0.2;
-  PID_speed.P = 0.06;        // 0.06
-  PID_speed.I = 0.005;       // 0.005
   readEEPROM();
-  //megapi_mode = BALANCED_MODE;
   Serial.print("Version: ");
   Serial.println(mVersion);
-  update_sensor = lasttime_speed = lasttime_angle = millis();
   blink_time = millis();
   BluetoothSource = DATA_SERIAL;
 }
@@ -2623,23 +2147,9 @@ void loop()
   {
     Compass.getAngle();
   }
-  angle_speed = gyro_ext.getGyroY();
-  if(megapi_mode == BLUETOOTH_MODE)
-  {
-    if(millis() - update_sensor > 10)
-    {
-      update_sensor = millis();
-      gyro_ext.fast_update();
-    }
-  }
-  else if(megapi_mode == AUTOMATIC_OBSTACLE_AVOIDANCE_MODE)
+  if(megapi_mode == AUTOMATIC_OBSTACLE_AVOIDANCE_MODE)
   { 
     ultrCarProcess();
-  }
-  else if(megapi_mode == BALANCED_MODE)
-  {
-    gyro_ext.fast_update();
-    balanced_model();
   }
   else if(megapi_mode == LINE_FOLLOW_MODE)
   {
