@@ -1732,7 +1732,7 @@ void ultrCarProcess(void)
     return;
   }
 
-  if((distance > 20) && (distance < 40))
+  if ((distance > 30) && (distance < 50))
   {
     randnum=random(300);
     if((randnum > 190) && (!rightflag))
@@ -1746,7 +1746,7 @@ void ultrCarProcess(void)
       TurnRight();  
     }
   }
-  else if((distance < 20) && (distance > 0))
+  else if (distance <= 30)
   {
     randnum=random(300);
     if(randnum > 190)
