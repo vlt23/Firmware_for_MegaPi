@@ -120,16 +120,12 @@ uint8_t bufferBt2[52];
 double  lastTime = 0.0;
 double  currentTime = 0.0;
 
-float dt;
-
 long blink_time = 0;
 
 boolean isStart = false;
 boolean isAvailable = false;
 boolean leftflag;
 boolean rightflag;
-boolean start_flag = false;
-boolean move_flag = false;
 boolean blink_flag = false;
 
 String mVersion = "0e.01.018";
@@ -143,7 +139,6 @@ String mVersion = "0e.01.018";
 #define RGBLED                 8
 #define MOTOR                  10
 #define SERVO                  11
-#define ENCODER                12
 #define PIRMOTION              15
 #define LINEFOLLOWER           17
 #define SHUTTER                20
@@ -588,25 +583,6 @@ void Stop(void)
 {
   encoders[0].setMotorPwm(0);
   encoders[1].setMotorPwm(0);
-}
-
-/**
- * \par Function
- *    ChangeSpeed
- * \par Description
- *    This function use to change the speed of car kit.
- * \param[in]
- *    spd - the speed of car kit(-255 ~ 255)
- * \par Output
- *    None
- * \return
- *    None
- * \par Others
- *    None
- */
-void ChangeSpeed(int16_t spd)
-{
-  moveSpeed = spd;
 }
 
 /**
@@ -1070,14 +1046,13 @@ long readLong(int16_t idx)
  */
 void initStepper(uint8_t index,int16_t maxSpeed)
 {
-  // steppers[index].setpin(index+1);
-
   steppers[index].setMaxSpeed(maxSpeed);
   steppers[index].setAcceleration(20000);
   steppers[index].setMicroStep(16);
   steppers[index].setSpeed(maxSpeed);
   steppers[index].enableOutputs();
 }
+
 /**
  * \par Function
  *    runModule
@@ -1125,11 +1100,10 @@ void runModule(uint8_t device)
       break;
     case STEPPER_NEW:
       {
-        uint8_t subcmd = port;
         uint8_t extID = readBuffer(3);
         uint8_t slot_num = readBuffer(7);
         int16_t maxSpeed = 0;
-        if(STEPPER_POS_MOTION_MOVE == subcmd)
+        if(STEPPER_POS_MOTION_MOVE == port)
         {
           long pos_temp = readLong(8);
           int16_t speed_temp = readShort(12);
@@ -1138,14 +1112,14 @@ void runModule(uint8_t device)
           initStepper(slot_num - 1,maxSpeed);
           steppers[slot_num - 1].move(pos_temp,extID,stepper_move_finish_callback);
         }
-        if(STEPPER_SPEED_MOTION == subcmd)
+        if(STEPPER_SPEED_MOTION == port)
         {
           int16_t speed_temp = readShort(8);
 
           initStepper(slot_num - 1,speed_temp);
           steppers[slot_num - 1].setSpeed(speed_temp);
         }
-        if(STEPPER_POS_MOTION_MOVETO == subcmd)
+        if(STEPPER_POS_MOTION_MOVETO == port)
         {
           long pos_temp = readLong(8);
           int16_t speed_temp = readShort(12);
@@ -1154,7 +1128,7 @@ void runModule(uint8_t device)
           initStepper(slot_num - 1,maxSpeed);
           steppers[slot_num - 1].moveTo(pos_temp,extID,stepper_move_finish_callback);
         }
-        else if(STEPPER_SET_CUR_POS_ZERO == subcmd)
+        else if(STEPPER_SET_CUR_POS_ZERO == port)
         {
           steppers[slot_num - 1].setCurrentPosition(0);
         }
@@ -1194,9 +1168,8 @@ void runModule(uint8_t device)
       break;
     case COMMON_COMMONCMD:
       {
-        uint8_t subcmd = port;
         uint8_t cmd_data = readBuffer(7);
-        if(SET_MEGAPI_MODE == subcmd)
+        if(SET_MEGAPI_MODE == port)
         {
           Stop();
           if((cmd_data == AUTOMATIC_OBSTACLE_AVOIDANCE_MODE) || 
@@ -1288,38 +1261,37 @@ void runModule(uint8_t device)
       break;
     case ENCODER_PID_MOTION:
       {
-        uint8_t subcmd = port;
         uint8_t extID = readBuffer(3);
         uint8_t slot_num = readBuffer(7);
-        if(ENCODER_BOARD_POS_MOTION_MOVE == subcmd)
+        if(ENCODER_BOARD_POS_MOTION_MOVE == port)
         {
           long pos_temp = readLong(8);
           int16_t speed_temp = readShort(12);
           speed_temp = abs(speed_temp);
           encoders[slot_num-1].move(pos_temp,(float)speed_temp,extID,encoder_move_finish_callback);
         }
-        if(ENCODER_BOARD_POS_MOTION_MOVETO == subcmd)
+        if(ENCODER_BOARD_POS_MOTION_MOVETO == port)
         {
           long pos_temp = readLong(8);
           int16_t speed_temp = readShort(12);
           speed_temp = abs(speed_temp);
           encoders[slot_num-1].moveTo(pos_temp,(float)speed_temp,extID,encoder_move_finish_callback);
         }
-        else if(ENCODER_BOARD_SPEED_MOTION == subcmd)
+        else if(ENCODER_BOARD_SPEED_MOTION == port)
         {
           int16_t speed_temp = readShort(8);  
           encoders[slot_num-1].runSpeed((float)speed_temp);
         }
-        else if(ENCODER_BOARD_PWM_MOTION == subcmd)
+        else if(ENCODER_BOARD_PWM_MOTION == port)
         {
           int16_t speed_temp = readShort(8);  
           encoders[slot_num-1].setTarPWM(speed_temp);     
         }
-        else if(ENCODER_BOARD_SET_CUR_POS_ZERO == subcmd)
+        else if(ENCODER_BOARD_SET_CUR_POS_ZERO == port)
         {
           encoders[slot_num-1].setPulsePos(0);     
         }
-        else if(ENCODER_BOARD_CAR_POS_MOTION == subcmd)
+        else if(ENCODER_BOARD_CAR_POS_MOTION == port)
         {
           long pos_temp = readLong(8);
           int16_t speed_temp = readShort(12);
@@ -1380,6 +1352,7 @@ int16_t searchServoPin(int16_t pin)
   }
   return 0;
 }
+
 /**
  * \par Function
  *    readSensor
@@ -1687,8 +1660,7 @@ void readSensor(uint8_t device)
       break;
     case COMMON_COMMONCMD:
       {
-        uint8_t subcmd = port;
-        if(GET_MEGAPI_MODE == subcmd)
+        if (GET_MEGAPI_MODE == port)
         {
           sendByte(megapi_mode);
         }
@@ -1831,9 +1803,6 @@ void line_model(void)
       break;
   }
 }
-
-uint8_t buf[64];
-uint8_t bufindex;
 
 /**
  * \par Function
