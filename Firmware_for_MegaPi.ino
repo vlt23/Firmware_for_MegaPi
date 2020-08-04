@@ -45,7 +45,6 @@ MeUltrasonicSensor *us = NULL;     //PORT_7
 MePort generalDevice;
 MeJoystick joystick;
 MeStepperOnBoard steppers[4] = {MeStepperOnBoard(1),MeStepperOnBoard(2),MeStepperOnBoard(3),MeStepperOnBoard(4)};
-MeBuzzer buzzer;
 MeEncoderOnBoard encoders[4];
 MeLineFollower line(PORT_8);
 MeColorSensor *colorsensor  = NULL;
@@ -83,27 +82,18 @@ MeModule modules[12];
   int16_t analogs[16]={A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15};
 #endif
 
-int16_t len = 52;
 int16_t servo_pins[12]={0,0,0,0,0,0,0,0,0,0,0,0};
 //Just for MegaPi
 int16_t moveSpeed = 180;
-int16_t turnSpeed = 180;
-int16_t minSpeed = 45;
-int16_t factor = 23;
 int16_t distance=0;
 int16_t randnum = 0;                                                                               
 int16_t LineFollowFlag=0;
-
-#define MOVE_STOP       0x00
-#define MOVE_FORWARD    0x01
-#define MOVE_BACKWARD   0x02
 
 #define BLUETOOTH_MODE                       0x00
 #define AUTOMATIC_OBSTACLE_AVOIDANCE_MODE    0x01
 #define LINE_FOLLOW_MODE                     0x04
 
 #define DATA_SERIAL                            0
-#define DATA_SERIAL1                           1
 #define DATA_SERIAL2                           2
 #define DATA_SERIAL3                           3
 
@@ -1865,6 +1855,7 @@ boolean read_serial(void)
     return result;
   }
 }
+
 void setup()
 {
   Serial.begin(115200);
